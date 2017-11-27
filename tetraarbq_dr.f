@@ -2,16 +2,9 @@ cc Copyright (C) 2009: Zydrunas Gimbutas and Hong Xiao
 cc Contact: Zydrunas Gimbutas <gimbutas@cims.nyu.edu>
 cc          Hong Xiao <hxiao@ucdavis.edu>
 cc 
-cc This program is free software; you can redistribute it and/or modify 
-cc it under the terms of the GNU General Public License as published by 
-cc the Free Software Foundation; either version 2 of the License, or 
-cc (at your option) any later version.  This program is distributed in 
-cc the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
-cc even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
-cc PARTICULAR PURPOSE.  See the GNU General Public License for more 
-cc details. You should have received a copy of the GNU General Public 
-cc License along with this program; 
-cc if not, see <http://www.gnu.org/licenses/>.
+cc This software is being released under a modified FreeBSD license
+cc (see COPYING in home directory). 
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
 c       
 c       Quadratures for smooth functions on a tetrahedron
@@ -24,7 +17,7 @@ c       (1,-1/Sqrt[3],-1/Sqrt[6]),  and (0,0,3/Sqrt[6])
 c
 c       Input:
 c
-c       n - the degree of the quadrature (must not exceed 9)
+c       n - the degree of the quadrature (must not exceed 15)
 c
 c       Output:
 c
@@ -127,6 +120,19 @@ c       at the user-provided nodes
 c
         npols=(mmax+1)*(mmax+2)*(mmax+3)/6
 c
+c       adjust to somewhat arbitrary scaling in ortho3eva.f
+c       
+        scale = 2.0d0 * sqrt(2.0d0) / 3.0d0
+c
+        d=0
+        do i=1,numnodes
+        d=d+weights(i)
+        enddo
+
+        do i=1,numnodes
+        weights(i)=weights(i)/d * scale
+        enddo
+
 c
         do 1200 j=1,npols
         rints(j)=0

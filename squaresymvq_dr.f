@@ -2,16 +2,9 @@ cc Copyright (C) 2009: Zydrunas Gimbutas and Hong Xiao
 cc Contact: Zydrunas Gimbutas <gimbutas@cims.nyu.edu>
 cc          Hong Xiao <hxiao@ucdavis.edu>
 cc 
-cc This program is free software; you can redistribute it and/or modify 
-cc it under the terms of the GNU General Public License as published by 
-cc the Free Software Foundation; either version 2 of the License, or 
-cc (at your option) any later version.  This program is distributed in 
-cc the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
-cc even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
-cc PARTICULAR PURPOSE.  See the GNU General Public License for more 
-cc details. You should have received a copy of the GNU General Public 
-cc License along with this program; 
-cc if not, see <http://www.gnu.org/licenses/>.
+cc This software is being released under a modified FreeBSD license
+cc (see COPYING in home directory). 
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
 c       
 c       Quadratures for smooth functions on a square
@@ -21,7 +14,7 @@ c       All weights are positive and inside the square
 c
 c       Input:
 c
-c       n - the degree of the quadrature (must not exceed 20)
+c       n - the degree of the quadrature (must not exceed 29)
 c
 c       Output:
 c
@@ -45,7 +38,7 @@ c
 c
 c       SET ALL PARAMETERS
 c
-        PRINT *, 'ENTER mmax (1..20)'
+        PRINT *, 'ENTER mmax (1..29)'
         READ *, mmax
 c
         call prinf('mmax=*',mmax,1)
