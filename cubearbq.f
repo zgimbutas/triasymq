@@ -3999,7 +3999,7 @@ c
 
         do i=1,numnodes
         vol=8.0d0
-        weights(i)=weights(i)/d*8.0
+        weights(i)=weights(i)/d*8.0d0
         enddo
 
         endif

@@ -4327,7 +4327,7 @@ c
         enddo
 
         do i=1,numnodes
-        vol = 8.0/6.0/sqrt(2.0)
+        vol = 8.0d0/6.0d0/sqrt(2.0d0)
         weights(i)=weights(i)/d * vol
         enddo
 
