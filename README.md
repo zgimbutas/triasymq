@@ -2,7 +2,7 @@
 
 Copyright (C) 2009-2012: Zydrunas Gimbutas and Hong Xiao
 
-Contact: Zydrunas Gimbutas <gimbutas@cims.nyu.edu>
+Contact: Zydrunas Gimbutas <gimbutas@cims.nyu.edu>,
          Hong Xiao <hxiao@ucdavis.edu>
 
 Date: November 26, 2017
@@ -383,11 +383,7 @@ improvements have been made for square*q and cube*q routines.
 
 2. triaarbq quadratures are not-optimized, see triarotq.
 
-3. In this release, 14th order quadrature in cubearbq table has 173
-nodes (in the reference paper, the corresponding quadrature has 172
-nodes but one negative weight).
-
-4. The library is released under a modified 3-clause BSD license.
+3. The library is released under a modified 3-clause BSD license.
 
 
 ### References
