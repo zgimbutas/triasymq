@@ -11,7 +11,7 @@ cat fort.11 >> a.txt
 echo >> a.txt
 }
 
-nquad=10
+nquad=50
 
 while
   test -n "$1"

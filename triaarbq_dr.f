@@ -36,7 +36,7 @@ c       SET ALL PARAMETERS
 c       
         call prini(6,13)
 c
-        PRINT *, 'ENTER n (1..48)'
+        PRINT *, 'ENTER n (1..50)'
         READ *, n
         call prinf('n=*',n,1)
 c
