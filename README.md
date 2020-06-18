@@ -5,9 +5,9 @@ Copyright (C) 2009-2012: Zydrunas Gimbutas and Hong Xiao
 Contact: Zydrunas Gimbutas <gimbutas@cims.nyu.edu>,
          Hong Xiao <hxiao@ucdavis.edu>
 
-Date: November 26, 2017
+Date: June 18, 2020
 
-Version 1.9
+Version 1.10
 
 
 ### Contents
@@ -22,6 +22,7 @@ triaintq.f - interpolation nodes/quadrature for smooth functions on triangle
 squaresymq.f - fully symmetric (D_4) quadrature for a unit square
 squaresymvq.f - centro/rotationally symmetric quadrature for a unit square
 squarearbq.f - arbitrary symmetric (or asymmetric) quadrature for a unit square
+squareintq.f - interpolation nodes/quadrature for smooth functions on a square
 ```
 
 ```
@@ -271,6 +272,35 @@ c       r  - rotational symmetry only (rotate by 90 degrees)
 c       c  - center symmetry only (rotate by 180 degrees)
 c
 c       *  - number of quadrature nodes is less than (n+1)*(n+2)/2/3
+```
+
+```
+squareintq.f - construct (or rather retrieve)
+interpolation nodes for the unit square [-1,1]^2.
+
+squareintq_dr.f - driver routines for squareintq.f
+
+makefile.squareintq - makefile for squareintq.f
+                       ( make -f makefile.squareintq )
+```
+
+```
+c interp    0     1     2     3     4     5     6     7     8     9    10
+c  -----------------------------------------------------------------------
+c quadr     1     2     4     5     7     9    11    12    14    16    18
+c  -----------------------------------------------------------------------
+c nodes     1     3     6    10    15    21    28    36    45    55    66
+c  -----------------------------------------------------------------------
+c cond #   1.0  1.4   1.8   2.1   2.8   3.1   3.8   3.6   4.1   4.6   5.7
+c
+c
+c interp         11    12    13    14    15    16    17    18    19    20
+c  -----------------------------------------------------------------------
+c quadr          19    20    22    23    26    27    28    30    32    34
+c  -----------------------------------------------------------------------
+c nodes          78    91   105   120   136   153   171   190   210   231
+c  -----------------------------------------------------------------------
+c cond #        8.4   6.1   7.7   6.9   8.8  11.1   9.1  10.7  10.0  13.0
 ```
 
 ### Quadratures for tetrahedra
