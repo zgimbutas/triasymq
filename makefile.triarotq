@@ -1,41 +1,13 @@
-PROJECT=int2         # for historical reasons we always like to 
-                     # call the executable int2, but you could set it to 
+PROJECT=int2         # for historical reasons we always like to
+                     # call the executable int2, but you could set it to
                      # something more descriptive
 
-###HOST=windows
-HOST=linux
-###HOST=macosx
+###HOST=linux-gfortran
+HOST=linux-gfortran-openmp
+###HOST=macos-gfortran
+###HOST=macos-gfortran-openmp
 
-
-ifeq ($(HOST),linux)
-
-OBJSUF=o
-MODSUF=mod
-FC=f77 -c 
-FFLAGS=-fast
-FLINK=f77 -o $(PROJECT)
-
-else
-
-ifeq ($(HOST),macosx)
-
-OBJSUF=o
-MODSUF=mod
-FC=gfortran -c 
-FFLAGS=-O2
-FLINK=gfortran -o $(PROJECT)
-
-else 
-
-OBJSUF=obj
-MODSUF=mod
-FC=lf95 -c
-FFLAGS=-O1
-FLINK=lf95 -out $(PROJECT)
-
-endif
-endif
-
+include make.inc
 
 .PHONY: $(PROJECT) clean list pack
 
