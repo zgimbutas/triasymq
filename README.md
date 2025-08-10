@@ -410,8 +410,8 @@ tables - raw data files for import to matlab, octave, and fortran
 
 ### Notes
 
-1. All tables have bee recomputed in quad precision, moderate
-improvements have been made for square*q and cube*q routines.
+1. All tables have been recomputed in quad precision, moderate
+improvements have been made for squareq and cubeq routines.
 
 2. The library is released under a modified 3-clause BSD license.
 
