@@ -10,7 +10,8 @@ c       Asymmetric quadratures for smooth functions on triangles
 c
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
-c       Release 1.8
+c       Release 1.3:  Corrected quadrature tables for orders 25 and 44
+c       Release 1.8:  All tables have been recomputed in quad precision
 c
 c
         subroutine triaarbq(n,vert1,vert2,vert3,rnodes,
