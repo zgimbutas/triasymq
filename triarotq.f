@@ -10,7 +10,7 @@ c       Rotationally symmetric quadratures for smooth functions on triangles
 c
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
-c       Release 1.8
+c       Release 1.8:  All tables have been recomputed in quad precision
 c
 c
         subroutine triarotq(n,vert1,vert2,vert3,rnodes,
