@@ -1,12 +1,15 @@
-cc Copyright (C) 2009: Vladimir Rokhlin
-cc 
+cc Copyright (C) 2014: Vladimir Rokhlin
+cc
 cc This software is being released under a modified FreeBSD license
-cc (see COPYING in home directory). 
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c
-c    $Date: 2010-01-05 12:57:52 -0500 (Tue, 05 Jan 2010) $
-c    $Revision: 782 $
-c
+cc (see COPYING in home directory).
+cc
+cc SPDX-License-Identifier: BSD-3-Clause-Modification
+cc
+cc    Modified August 13, 2025: Zydrunas Gimbutas
+cc    - remove unnecessary save statements
+cc    - by default, initialize printing units to 0
+cc    - remove fileflush, mach_zero and ztime
+cc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c       Printing routines
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -19,10 +22,9 @@ C
         REAL *4 A(1)
         REAL *8 A2(1)
         REAL *8 A4(1)
-ccc        INTEGER *4 IA(1)
         INTEGER IA(1)
-        INTEGER *4 IA1(1)
         INTEGER *2 IA2(1)
+        LOGICAL *1 LA(1)
         data IP/0/,IQ/0/
         IP=IP1
         IQ=IQ1
@@ -48,6 +50,16 @@ C
         IF(IP.NE.0 .AND. N.NE.0) WRITE(IP,1400)(A2(J),J=1,N)
         IF(IQ.NE.0 .AND. N.NE.0) WRITE(IQ,1400)(A2(J),J=1,N)
  1400 FORMAT(6(2X,E11.5))
+        RETURN
+C
+C
+C
+C
+        ENTRY PRIN2_long(MES,A2,N)
+        CALL MESSPR(MES,IP,IQ)
+        IF(IP.NE.0 .AND. N.NE.0) WRITE(IP,1450)(A2(J),J=1,N)
+        IF(IQ.NE.0 .AND. N.NE.0) WRITE(IQ,1450)(A2(J),J=1,N)
+ 1450 FORMAT(2(2X,E22.16))
         RETURN
 C
 C
@@ -97,6 +109,18 @@ C
         IF(IP.NE.0 .AND. N.NE.0) WRITE(IP,2000)(AA(J),J=1,N)
         IF(IQ.NE.0 .AND. N.NE.0) WRITE(IQ,2000)(AA(J),J=1,N)
         RETURN
+C
+C
+C
+C
+        ENTRY PRINL1(MES,LA,N)
+        CALL MESSPR(MES,ip,iq)
+ 2200 format(20L3)
+c
+        IF(IP.NE.0 .AND. N.NE.0) WRITE(IP,2200)(lA(J),J=1,N)
+        IF(IQ.NE.0 .AND. N.NE.0) WRITE(IQ,2200)(lA(J),J=1,N)
+c
+        RETURN
         END
 c
 c
@@ -109,7 +133,7 @@ c
 C
 C         DETERMINE THE LENGTH OF THE MESSAGE
 C
-        I=0
+        I1=0
         DO 1400 I=1,10000
         IF(MES(I).EQ.AST) GOTO 1600
         I1=I
@@ -128,13 +152,13 @@ c
 c
 c
         subroutine msgmerge(a,b,c)
-        character *1 a(1),b(1),c(1),ast
+        character *1 a(*),b(*),c(*),ast
         data ast/'*'/
 c
         do 1200 i=1,1000
 c
         if(a(i) .eq. ast) goto 1400
-        c(i)=a(i)       
+        c(i)=a(i)
         iadd=i
  1200 continue
 c

@@ -1,31 +1,31 @@
-cc Copyright (C) 2009: Vladimir Rokhlin
-cc 
+cc Copyright (C) 2014: Vladimir Rokhlin
+cc
 cc This software is being released under a modified FreeBSD license
-cc (see COPYING in home directory). 
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cc (see COPYING in home directory).
+cc
+cc SPDX-License-Identifier: BSD-3-Clause-Modification
+cc
+cc    Modified August 13, 2025: Zydrunas Gimbutas
+cc    - remove unnecessary save statements
+cc    - in legeexps, use legewhts (previous default) instead of legerts2
+cc
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
-c    $Date: 2010-01-05 12:57:52 -0500 (Tue, 05 Jan 2010) $
-c    $Revision: 782 $
-c
-c
-c
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c
-c        this is the end of the debugging code and the beginning 
+c        this is the end of the debugging code and the beginning
 c        of the legendre expansion routines
 c
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
 c
 c
-c        This file contains a set of subroutines for the handling 
-c        of Legendre expansions. It contains 19 subroutines that are 
-c        user-callable. Following is a brief description of these 
+c        This file contains a set of subroutines for the handling
+c        of Legendre expansions. It contains 25 subroutines that are
+c        user-callable. Following is a brief description of these
 c        subroutines.
 c
 c   legeexps - constructs Legendre nodes, and  corresponding Gaussian
-c        weights. Also constructs the matrix v converting the 
-c         coefficients of a legendre expansion into its values at 
+c        weights. Also constructs the matrix v converting the
+c         coefficients of a legendre expansion into its values at
 c         the n Gaussian nodes, and its inverse u, converting the
 c         values of a function at n Gaussian nodes into the
 c         coefficients of the corresponding Legendre series.
@@ -35,149 +35,157 @@ c         with its derivative) at the user-provided point
 c
 c   legepols - evaluates a bunch of Legendre polynomials
 c         at the user-provided point
-c   legepls2 - an accelerated version of legepols, evaluating a 
+c   legepls2 - an accelerated version of legepols, evaluating a
 c         Legendre polynomials at the user-provided point; maximum
 c         order of the polynomials to be evaluated is 290
 c
 c   legepolders - evaluates a bunch of Legendre polynomials
-c         at the user-provided point, and the derivatives of the 
-c         said polynomials 
-c   legeinmt - for the user-specified n, constructs the matrices of 
-c        spectral indefinite integration differentiation on the n 
-c        Gaussian nodes on the interval [-1,1]. 
+c         at the user-provided point, and the derivatives of the
+c         said polynomials
+c   legeinmt - for the user-specified n, constructs the matrices of
+c        spectral indefinite integration differentiation on the n
+c        Gaussian nodes on the interval [-1,1].
 c
-c   legeinte - computes the indefinite integral of the legendre 
+c   legeinte - computes the indefinite integral of the legendre
 c        expansion polin getting the expansion polout
 c
-c   legediff -  differentiates the legendre expansion polin getting 
+c   legediff -  differentiates the legendre expansion polin getting
 c        the expansion polout
 c
-c   legefder - computes the value and the derivative of a Legendre 
-c        expansion at point X in interval [-1,1]; this subroutine 
+c   legefder - computes the value and the derivative of a Legendre
+c        expansion at point X in interval [-1,1]; this subroutine
 c        is not designed to be very efficient, but it does not
 c        use any exdternally supplied arrays
 c
-c   legefde2 - the same as legefder, except it is desigmed to be 
+c   legefde2 - the same as legefder, except it is desigmed to be
 c        fairly efficient; it uses externally supplied arrays
 c        that are precomputed
-c   
-c   legeexev - computes the value of a Legendre expansion with 
+c
+c   legeexev - computes the value of a Legendre expansion with
 c        at point X in interval [-1,1]; same as legefder, but does
 c        not compute the derivative of the expansion
 c
-c   legeexe2 - the same as legeexev, except it is desigmed to be 
+c   legeexe2 - the same as legeexev, except it is desigmed to be
 c        fairly efficient; it uses externally supplied arrays
 c        that are precomputed
 c
-c   lematrin - constructs the matrix interpolating functions from 
-c        the n-point Gaussian grid on the interval [-1,1] to an 
+c   lematrin - constructs the matrix interpolating functions from
+c        the n-point Gaussian grid on the interval [-1,1] to an
 c        arbitrary m-point grid (the nodes of the latter are
 c        user-provided)
-c   
-c   levecin - constructs the coefficients of the standard 
-c        interpolation formula connecting the values of a 
+c
+c   levecin - constructs the coefficients of the standard
+c        interpolation formula connecting the values of a
 c        function at n Gaussian nodes on the interval [a,b] with
 c        its value at the point x \in R^1
 c
 c   legeodev - evaluates at the point x a Legendre expansion
-c        having only odd-numbered elements; this is a fairly 
-c        efficient code, using external arrays that are 
+c        having only odd-numbered elements; this is a fairly
+c        efficient code, using external arrays that are
 c        precomputed
 c
 c   legeevev - evaluates at the point x a Legendre expansion
-c        having only even-numbered elements; this is a fairly 
-c        efficient code, using external arrays that are 
+c        having only even-numbered elements; this is a fairly
+c        efficient code, using external arrays that are
 c        precomputed
 c
-c   legepeven - evaluates even-numbered Legendre polynomials 
-c        of the argument x; this is a fairly efficient code, 
+c   legepeven - evaluates even-numbered Legendre polynomials
+c        of the argument x; this is a fairly efficient code,
 c        using external arrays that are precomputed
 c
-c   legepodd - evaluates odd-numbered Legendre polynomials 
-c        of the argument x; this is a fairly efficient code, 
+c   legepodd - evaluates odd-numbered Legendre polynomials
+c        of the argument x; this is a fairly efficient code,
 c        using external arrays that are precomputed
 c
 C   legefdeq - computes the value and the derivative of a
 c        Legendre Q-expansion with coefficients coefs
 C     at point X in interval (-1,1); please note that this is
 c     the evil twin of the subroutine legefder, evaluating the
-c     proper (P-function) Legendre expansion; this subroutine 
+c     proper (P-function) Legendre expansion; this subroutine
 c        is not designed to be very efficient, but it does not
 c        use any exdternally supplied arrays
 c
-c   legeq - calculates the values and derivatives of a bunch 
-c        of Legendre Q-functions at the user-specified point 
+c   legeq - calculates the values and derivatives of a bunch
+c        of Legendre Q-functions at the user-specified point
 c        x on the interval (-1,1)
 c
 c   legeqs - calculates the value and the derivative of a single
-c        Legendre Q-function at the user-specified point 
+c        Legendre Q-function at the user-specified point
 c        x on the interval (-1,1)
 c
-c   legecfde - computes the value and the derivative of a Legendre 
-c        expansion with complex coefficients at point X in interval 
-c        [-1,1]; this subroutine is not designed to be very efficient, 
+c   legecfde - computes the value and the derivative of a Legendre
+c        expansion with complex coefficients at point X in interval
+c        [-1,1]; this subroutine is not designed to be very efficient,
 c        but it does not use any exdternally supplied arrays. This is
 c        a complex version of the subroutine legefder.
 c
-c   legecfd2 - the same as legecfde, except it is designed to be 
+c   legecfd2 - the same as legecfde, except it is designed to be
 c        fairly efficient; it uses externally supplied arrays
-c        that are precomputed. This is a complex version of the 
+c        that are precomputed. This is a complex version of the
 c        subroutine legefde2.
 c
 c   legecva2 - the same as legecfd2, except it is does not evaluate
 c        the derivative of the function
+c   legerts - an improved code for the construction of Gaussian
+c        quadratures. Its asymptotic CPU time requirements are of
+c        the order $O(n)$; it has been tested for n \leq 100 000.
 c
 c
         subroutine legeexps(itype,n,x,u,v,whts)
         implicit real *8 (a-h,o-z)
         dimension x(1),whts(1),u(n,n),v(n,n)
 c
-c         this subroutine constructs the gaussiaqn nodes 
-c         on the interval [-1,1], and the weights for the 
+c         this subroutine constructs the gaussiaqn nodes
+c         on the interval [-1,1], and the weights for the
 c         corresponding order n quadrature. it also constructs
 c         the matrix v converting the coefficients
 c         of a legendre expansion into its values at the n
 c         gaussian nodes, and its inverse u, converting the
 c         values of a function at n gaussian nodes into the
 c         coefficients of the corresponding legendre series.
-c         no attempt has been made to make this code efficient, 
-c         but its speed is normally sufficient, and it is 
+c         no attempt has been made to make this code efficient,
+c         but its speed is normally sufficient, and it is
 c         mercifully short.
 c
 c                 input parameters:
 c
 c  itype - the type of the calculation to be performed
-c          itype=0 means that only the gaussian nodes are 
-c                  to be constructed. 
-c          itype=1 means that only the nodes and the weights 
+c          itype=0 means that only the gaussian nodes are
+c                  to be constructed.
+c          itype=1 means that only the nodes and the weights
 c                  are to be constructed
 c          itype=2 means that the nodes, the weights, and
 c                  the matrices u, v are to be constructed
 c  n - the number of gaussian nodes and weights to be generated
-c  
+c
 c                 output parameters:
 c
 c  x - the order n gaussian nodes - computed independently
 c          of the value of itype.
 c  u - the n*n matrix converting the  values at of a polynomial of order
-c         n-1 at n legendre nodes into the coefficients of its 
+c         n-1 at n legendre nodes into the coefficients of its
 c         legendre expansion - computed only in itype=2
 c  v - the n*n matrix converting the coefficients
 c         of an n-term legendre expansion into its values at
 c         n legendre nodes (note that v is the inverse of u)
 c          - computed only in itype=2
-c  whts - the corresponding quadrature weights - computed only 
+c  whts - the corresponding quadrature weights - computed only
 c         if itype .ge. 1
 c
-c       . . . construct the nodes and the weights of the n-point gaussian 
+c       . . . construct the nodes and the weights of the n-point gaussian
 c             quadrature
 c
         ifwhts=0
         if(itype. gt. 0) ifwhts=1
         call legewhts(n,x,whts,ifwhts)
 c
+cccc        itype_rts=0
+cccc        if(itype .gt. 0) itype_rts=1
+c
+cccc        call legerts2(itype_rts,n,x,whts)
+c
 c       construct the matrix of values of the legendre polynomials
-c       at these nodes        
+c       at these nodes
 c
         if(itype .ne. 2) return
         do 1400 i=1,n
@@ -192,9 +200,9 @@ c
  1800 continue
 c
 c       now, v converts coefficients of a legendre expansion
-c       into its values at the gaussian nodes. construct its 
-c       inverse u, converting the values of a function at 
-c       gaussian nodes into the coefficients of a legendre 
+c       into its values at the gaussian nodes. construct its
+c       inverse u, converting the values of a function at
+c       gaussian nodes into the coefficients of a legendre
 c       expansion of that function
 c
         do 2800 i=1,n
@@ -211,12 +219,246 @@ c
 c
 c
 c
+        subroutine legerts2(itype,n,ts,whts)
+        implicit real *8 (a-h,o-z)
+        dimension ts(1),whts(1)
+c
+c        This subroutine constructs the Gaussian quadrature
+c        or order n. Its claim to fame is the fact that the
+c        cost of the calculation is proportional to n; in
+c        practice, with n=10 000 the calculation is more or
+c        less instantaneous. PLEASE NOTE THAT THIS IS A
+c        MILDLY OPTIMIZED - and much less readable - VERSION
+c        OF THE SUBROUTINE LEGERTS (SEE)
+c
+c
+c                 Input parameters:
+c
+c  itype - the type of calculation desired:
+c     itype=1 will cause both the roots and the weights to be returned
+c     itype=0 will cause only the roots to be returned
+c  n - the number of nodes to be returned
+c
+c                 Output parameters:
+c
+c  ts - the n Gaussian nodes on the interval [-1,1]
+c  whts - the n Gaussian weights on the interval [-1,1]
+c
+c
+c        . . . determine the number of Taylor coefficients
+c              to be used
+c
+        k=30
+        eps=1.0d-8
+c
+        d=1
+        d2=d+1.0d-24
+        if(d2 .ne. d) then
+            k=54
+            eps=1.0d-13
+        endif
+c
+c       . . . construct the array of initial approximations
+c             to the roots of the n-th legendre polynomial
+c
+        i=n/2
+        ifodd=n-2*i
+c
+        DONE=1
+        pi=atan(done)*4
+        h=pi/(2*n)
+        ii=0
+c
+        d_den=pi/(4*n+2)
+        do 1100 i=n/2+1,n
+c
+        ii=ii+1
+        theta=(4*i-done)*d_den
+        ts(ii)=-cos(theta)
+1100  CONTINUE
+c
+c       starting from the center, find roots one after another
+c
+        pol=1
+        der=0
+c
+        x0=0
+        call legepol(x0,n,pol,der)
+        x1=ts(1)
+c
+        n2=(n+1)/2
+c
+        pol3=pol
+        der3=der
+c
+        do 2000 kk=1,n2
+c
+        if( (kk .eq. 1) .and. (ifodd .eq. 1) ) then
+            ts(kk)=x0
+            whts(kk)=der
+            x0=x1
+            x1=ts(kk+1)
+            pol3=pol
+            der3=der
+            goto 2000
+        endif
+c
+c        conduct newton
+c
+        ifstop=0
+        do 1400 i=1,10
+c
+        if(i .ne. 1) then
+            h2=x1-xold
+c
+            if(abs(h2) .lt. 1.0d-36) goto 1600
+c
+            if(i .eq. 2)
+     1          call legetayl2(polold,derold,xold,h2,n,k/2,pol,der)
+            if(i .ne. 2)
+     1          call legetayl2(polold,derold,xold,h2,n,k/5,pol,der)
+c
+            polold=pol
+            derold=der
+            xold=x1
+        endif
+c
+        if(i .eq. 1) then
+            h=x1-x0
+            call legetayl2(pol3,der3,x0,h,n,k,pol,der)
+c
+            polold=pol
+            derold=der
+            xold=x1
+        endif
+c
+        x1=x1-pol/der
+c
+        if(abs(pol) .lt. eps) ifstop=ifstop+1
+        if(ifstop .eq. 3) goto 1600
+c
+ 1400 continue
+ 1600 continue
+c
+        ts(kk)=x1
+        if(itype .gt. 0) whts(kk)=der
+c
+        x0=x1
+        x1=ts(kk+1)
+        pol3=pol
+        der3=der
+ 2000 continue
+c
+c        put the obtained roots in the proper order
+c
+        do 2200 i=(n+1)/2,1,-1
+c
+        ts(i+n/2)=ts(i)
+ 2200 continue
+c
+        do 2400 i=1,n/2
+c
+        ts(i)=-ts(n-i+1)
+ 2400 continue
+c
+        if(itype .le. 0) return
+c
+c        put the obtained roots in the proper order
+c
+        do 2600 i=(n+1)/2,1,-1
+c
+        whts(i+n/2)=whts(i)
+ 2600 continue
+c
+        do 2800 i=1,n/2
+c
+        whts(i)=whts(n-i+1)
+ 2800 continue
+c
+        do 3600 i=1,n
+c
+        whts(i)=2/(1-ts(i)**2)/whts(i)**2
+ 3600 continue
+c
+        return
+        end
+c
+c
+c
+c
+c
+        subroutine legetayl2(pol,der,x,h,n,k,sum,sumder)
+        implicit real *8 (a-h,o-z)
+        save
+        dimension squares(100),prods(100),prodinv(100),rnums(100)
+        data ifcalled/0/
+c
+c       initialize
+c
+        if(ifcalled .eq. 1) goto 2000
+c
+        done=1
+        two=2
+        half=1/two
+        do 1200 i=1,90
+c
+        prods(i)=i*done*(i+1)
+        squares(i)=i**2
+        prodinv(i)=1/prods(i)
+        rnums(i)=i
+ 1200 continue
+c
+        ifcalled=1
+ 2000 continue
+c
+c        . . . evaluate the derivatives of P_n scaled by h^n/n!,
+c              and sum the taylor series for P_n and its
+c              derivative
+c
+        dn=n*(n+done)
+        d7=done/(done-x**2)
+        q0=pol
+        q1=der*h
+        q2=(two*x*der-dn*pol)*d7
+        q2=q2*h**2*half
+c
+        hinv=done/h
+        sum=q0+q1+q2
+        sumder=(q1+q2+q2)*hinv
+c
+cccc        if(k .le. 2) return
+c
+        qi=q1
+        qip1=q2
+c
+        ddd=h**2*d7
+        dddd=two*x*hinv
+c
+        do 2200 i=1,k-2
+c
+        d=dddd*squares(i+1)*qip1-(dn-prods(i))*qi
+        d=d*prodinv(i+1)*ddd
+c
+        sum=sum+d
+        sumder=sumder+d*rnums(i+2)*hinv
+c
+        qi=qip1
+        qip1=d
+ 2200 continue
+c
+        return
+        end
+c
+c
+c
+c
+c
         subroutine legewhts_old(n,ts,whts,ifwhts)
         implicit real *8 (a-h,o-z)
         dimension ts(1),whts(1)
 c
 c        this subroutine constructs the nodes and the
-c        weights of the n-point gaussian quadrature on 
+c        weights of the n-point gaussian quadrature on
 c        the interval [-1,1]
 c
 c                input parameters:
@@ -235,7 +477,7 @@ c
         ZERO=0
         DONE=1
         pi=datan(done)*4
-        h=pi/(2*n) 
+        h=pi/(2*n)
         do 1200 i=1,n
         t=(2*i-1)*h
         ts(n-i+1)=dcos(t)
@@ -258,7 +500,7 @@ ccccc         call prin2('delta=*',delta,1)
 c
 cccc        call prin2('delta=*',delta,1)
 
-        
+
         if(ifout .eq. 3) goto 1600
  1400 continue
  1600 continue
@@ -266,7 +508,7 @@ cccc        call prin2('delta=*',delta,1)
         ts(n-i+1)=-xk
  2000 continue
 c
-c       now, use the explicit integral formulae 
+c       now, use the explicit integral formulae
 c       to obtain the weights
 c
         if(ifwhts .eq. 0) return
@@ -290,7 +532,7 @@ c
         dimension ts(1),whts(1),ws2(1000),rats(1000)
 c
 c        this subroutine constructs the nodes and the
-c        weights of the n-point gaussian quadrature on 
+c        weights of the n-point gaussian quadrature on
 c        the interval [-1,1]
 c
 c                input parameters:
@@ -309,7 +551,7 @@ c
         ZERO=0
         DONE=1
         pi=datan(done)*4
-        h=pi/(2*n) 
+        h=pi/(2*n)
         do 1200 i=1,n
         t=(2*i-1)*h
         ts(n-i+1)=dcos(t)
@@ -335,7 +577,7 @@ c
         ts(i)=xk
         ts(n-i+1)=-xk
  2000 continue
-c     
+c
 c        construct the weights via the orthogonality relation
 c
         if(ifwhts .eq. 0) return
@@ -357,7 +599,7 @@ c
         implicit real *8 (a-h,o-z)
 c
         done=1
-        sum=0 
+        sum=0
 c
         pkm1=1
         pk=x
@@ -371,7 +613,7 @@ c        if n=0 or n=1 - exit
 c
         if(n .ge. 2) goto 1200
 
-        sum=0 
+        sum=0
 c
         pol=1
         der=0
@@ -525,13 +767,13 @@ c
       REAL *8 vals(*),ders(*)
 C
 C     This subroutine computes the values and the derivatives
-c     of n+1 first Legendre polynomials at the point x 
+c     of n+1 first Legendre polynomials at the point x
 C     in interval [-1,1].
 c
 c                input parameters:
 c
 C     X = evaluation point
-C     N  = order of expansion 
+C     N  = order of expansion
 c   IMPORTANT NOTE: n is {\bf the order of the expansion, which is
 c         one less than the number of terms in the expansion!!}
 c
@@ -564,7 +806,7 @@ c
 
         vals(j+1)=pj
         ders(j+1)=derj
-c 
+c
         pjm2=pjm1
         pjm1=pj
         derjm2=derjm1
@@ -596,7 +838,7 @@ c
         pjcoefs2(j)=-(j-done)/j
 c
  1050 continue
-c 
+c
         ifcalled=1
  1100 continue
 
@@ -643,8 +885,8 @@ c
 c
 c        for the user-specified n, this subroutine constructs
 c        the matrices of spectral indefinite integration and/or
-c        spectral differentiation on the n Gaussian nodes 
-c        on the interval [-1,1]. Actually, this is omnly a 
+c        spectral differentiation on the n Gaussian nodes
+c        on the interval [-1,1]. Actually, this is omnly a
 c        memory management routine. All the actual work is done
 c        by the subroutine legeinm0 (see)
 c
@@ -652,23 +894,23 @@ c                           input parameters:
 c
 c  n - the number of Gaussian nodes on the interval [-1,1]
 c  itype - the type of the calculation to be performed
-c          EXPLANATION: 
-c       itype=1 means that only the matrix ainte will 
+c          EXPLANATION:
+c       itype=1 means that only the matrix ainte will
 c               be constructed
-c       itype=2 means that only the matrix adiff will 
+c       itype=2 means that only the matrix adiff will
 c               be constructed
 c       itype=3 means that both matrices ainte and adiff
 c               will be constructed
 c
 c                           output paramaters:
 c
-c  ainte - the matrix of spectral indefinite integration on 
+c  ainte - the matrix of spectral indefinite integration on
 c          the Gaussian nodes
-c  adiff - the matrix of spectral differentiation on 
+c  adiff - the matrix of spectral differentiation on
 c          the Gaussian nodes
 c  x - the n Gaussian nodes on the intervl [-1,1]
 c  whts - the n Gaussian weights on the interval [-1,1]
-c  endinter - the interpolation coefficients converting the 
+c  endinter - the interpolation coefficients converting the
 c          values of a function at n Gaussian nodes into its
 c          value at 1 (the right end of the interval)
 c
@@ -717,26 +959,26 @@ c
 c
 c        for the user-specified n, this subroutine constructs
 c        the matrices of spectral indefinite integration and/or
-c        spectral differentiation on the n Gaussian nodes 
+c        spectral differentiation on the n Gaussian nodes
 c        on the interval [-1,1]
 c
 c                           input parameters:
 c
 c  n - the number of Gaussian nodes on the interval [-1,1]
 c  itype - the type of the calculation to be performed
-c          EXPLANATION: 
-c       itype=1 means that only the matrix ainte will 
+c          EXPLANATION:
+c       itype=1 means that only the matrix ainte will
 c               be constructed
-c       itype=2 means that only the matrix adiff will 
+c       itype=2 means that only the matrix adiff will
 c               be constructed
 c       itype=3 means that both matrices ainte and adiff
 c               will be constructed
 c
 c                           output paramaters:
 c
-c  ainte - the matrix of spectral indefinite integration on 
+c  ainte - the matrix of spectral indefinite integration on
 c          the Gaussian nodes
-c  adiff - the matrix of spectral differentiation on 
+c  adiff - the matrix of spectral differentiation on
 c          the Gaussian nodes
 c  x - the n Gaussian nodes on the intervl [-1,1]
 c  whts - the n Gaussian weights on the interval [-1,1]
@@ -747,7 +989,7 @@ c  polin, polout - must be n+3 real *8 locations each
 c
 c  u, v, w - must be n**2+1 real *8 locations each
 c
-c        . . . construct the matrices of the forward and inverse 
+c        . . . construct the matrices of the forward and inverse
 c              Legendre transforms
 c
         itype2=2
@@ -844,14 +1086,14 @@ c
         implicit real *8 (a-h,o-z)
         dimension polin(1),polout(*)
 c
-c       this subroutine computes the indefinite integral of the 
+c       this subroutine computes the indefinite integral of the
 c       legendre expansion polin getting the expansion polout
 c
 c
 c                       input parameters:
 c
 c  polin - the legendre expansion to be integrated
-c  n - the order of the expansion polin 
+c  n - the order of the expansion polin
 c   IMPORTANT NOTE: n is {\bf the order of the expansion, which is
 c         one less than the number of terms in the expansion!!}
 c         also nothe that the order of the integrated expansion is
@@ -859,7 +1101,7 @@ c         n+1 (who could think!)
 c
 c                       output parameters:
 c
-c  polout - the legendre expansion of the integral of the function 
+c  polout - the legendre expansion of the integral of the function
 c         represented by the expansion polin
 c
         do 1200 i=1,n+2
@@ -885,7 +1127,7 @@ c
         sss=-sss
  2200 continue
 c
-        call prin2('dd=*',dd,1)
+ccc        call prin2('dd=*',dd,1)
         polout(1)=-dd
 c
         return
@@ -899,14 +1141,14 @@ c
         implicit real *8 (a-h,o-z)
         dimension polin(1),polout(1)
 c
-c       this subroutine differentiates the legendre 
+c       this subroutine differentiates the legendre
 c       expansion polin getting the expansion polout
 c
 c
 c                       input parameters:
 c
 c  polin - the legendre expansion to be differentiated
-c  n - the order of the expansion polin 
+c  n - the order of the expansion polin
 c   IMPORTANT NOTE: n is {\bf the order of the expansion, which is
 c         one less than the number of terms in the expansion!!}
 c         also nothe that the order of the integrated expansion is
@@ -914,7 +1156,7 @@ c         n+1 (who could think!)
 c
 c                       output parameters:
 c
-c  polout - the legendre expansion of the derivative of the function 
+c  polout - the legendre expansion of the derivative of the function
 c         represented by the expansion polin
 c
         do 1200 k=1,n+1
@@ -927,7 +1169,7 @@ c
         do 2000 k=n+1,2,-1
 c
         j=k-1
-c         
+c
         polout(k-1)=pk*(2*j-1)
         if(k .ge. 3) pkm2=polin(k-2)+pk
 c
@@ -954,7 +1196,7 @@ c                input parameters:
 c
 C     X = evaluation point
 C     PEXP = expansion coefficients
-C     N  = order of expansion 
+C     N  = order of expansion
 c   IMPORTANT NOTE: n is {\bf the order of the expansion, which is
 c         one less than the number of terms in the expansion!!}
 c
@@ -972,7 +1214,7 @@ C
         derjm2=0
         derjm1=1
 c
-        val=pexp(1)*pjm2+pexp(2)*pjm1      
+        val=pexp(1)*pjm2+pexp(2)*pjm1
         der=pexp(2)
 c
         DO 600 J = 2,N
@@ -984,7 +1226,7 @@ c
 c
         derj=derj/j
         der=der+pexp(j+1)*derj
-c 
+c
         pjm2=pjm1
         pjm1=pj
         derjm2=derjm1
@@ -1013,22 +1255,22 @@ c                input parameters:
 c
 C  X - evaluation point
 C  PEXP - expansion coefficients
-C  N  - order of expansion 
-c  pjcoefs1, pjcoefs2 - two arrays precomputed on a previous call 
+C  N  - order of expansion
+c  pjcoefs1, pjcoefs2 - two arrays precomputed on a previous call
 c      on a previous call to this subroutine. Please note that this
-c      is only an input parameter if the parameter ninit (see below) 
+c      is only an input parameter if the parameter ninit (see below)
 c      has been set to 0; otherwise, these are output parameters
-c  ninit - tells the subroutine whether and to what maximum order the 
+c  ninit - tells the subroutine whether and to what maximum order the
 c       arrays coepnm1,coepnp1,coexpnp1 should be initialized.
 c     EXPLANATION: The subroutine will initialize the first ninit
-c       elements of each of the arrays pjcoefs1, pjcoefs2. On the first 
-c       call to this subroutine, ninit should be set to the maximum 
-c       order n for which this subroutine might have to be called; 
-c       on subsequent calls, ninit should be set to 0. PLEASE NOTE 
+c       elements of each of the arrays pjcoefs1, pjcoefs2. On the first
+c       call to this subroutine, ninit should be set to the maximum
+c       order n for which this subroutine might have to be called;
+c       on subsequent calls, ninit should be set to 0. PLEASE NOTE
 c       THAT THAT THESE ARRAYS USED BY THIS SUBROUTINE
-c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE 
+c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE
 c       SUBROUTINE LEGEEXE2. If these arrays have been initialized
-c       by one of these two subroutines, they do not need to be 
+c       by one of these two subroutines, they do not need to be
 c       initialized by the other one.
 c
 c   IMPORTANT NOTE: n is {\bf the order of the expansion, which is
@@ -1049,7 +1291,7 @@ c
         pjcoefs2(j)=-(j-done)/j
 c
  1200 continue
-c 
+c
         ifcalled=1
  1400 continue
 c
@@ -1058,7 +1300,7 @@ c
         derjm2=0
         derjm1=1
 c
-        val=pexp(1)*pjm2+pexp(2)*pjm1      
+        val=pexp(1)*pjm2+pexp(2)*pjm1
         der=pexp(2)
 c
         DO 1600 J = 2,N
@@ -1078,7 +1320,7 @@ ccc         call prin2('derj=*',derj,1)
 
 cccc        derj=derj/j
         der=der+pexp(j+1)*derj
-c 
+c
         pjm2=pjm1
         pjm1=pj
         derjm2=derjm1
@@ -1103,7 +1345,7 @@ c                input parameters:
 c
 C     X = evaluation point
 C     PEXP = expansion coefficients
-C     N  = order of expansion 
+C     N  = order of expansion
 c   IMPORTANT NOTE: n is {\bf the order of the expansion, which is
 c         one less than the number of terms in the expansion!!}
 c
@@ -1115,7 +1357,7 @@ C
         pjm2=1
         pjm1=x
 c
-        val=pexp(1)*pjm2+pexp(2)*pjm1      
+        val=pexp(1)*pjm2+pexp(2)*pjm1
         der=pexp(2)
 c
         DO 600 J = 2,N
@@ -1146,7 +1388,7 @@ c                input parameters:
 c
 C     X = evaluation point
 C     PEXP = expansion coefficients
-C     N  = order of expansion 
+C     N  = order of expansion
 c   IMPORTANT NOTE: n is {\bf the order of the expansion, which is
 c         one less than the number of terms in the expansion!!}
 c
@@ -1164,14 +1406,14 @@ c
         pjcoefs2(j)=-(j-done)/j
 c
  1200 continue
-c 
+c
         ifcalled=1
  1400 continue
 c
         pjm2=1
         pjm1=x
 c
-        val=pexp(1)*pjm2+pexp(2)*pjm1      
+        val=pexp(1)*pjm2+pexp(2)*pjm1
         der=pexp(2)
 c
         DO 600 J = 2,N
@@ -1217,7 +1459,7 @@ c  ts - the n Gaussian nodes on the interval [-1,1]
 c
 c                  Work arrays:
 c
-c  w - must be at least 2*n**2+n + 100 real *8 locations long 
+c  w - must be at least 2*n**2+n + 100 real *8 locations long
 c
 
         icoefs=1
@@ -1252,8 +1494,8 @@ c
         implicit real *8 (a-h,o-z)
         dimension u(n,n),v(n,n),ts(1),coefs(1)
 c
-c        This subroutine constructs the coefficients of the 
-c        standard interpolation formula connecting the values of a 
+c        This subroutine constructs the coefficients of the
+c        standard interpolation formula connecting the values of a
 c        function at n Gaussian nodes on the interval [a,b] with
 c        its value at the point x \in R^1
 c
@@ -1262,15 +1504,15 @@ c
 c  n - the number of interpolation nodes
 c  x - the points at which the function is to be interpolated
 c  ts - the n Gaussian nodes on the interval [-1,1]; please note that
-c        it is an input parameter only if the parameter ifinit (see 
+c        it is an input parameter only if the parameter ifinit (see
 c        below) has been set to 1; otherwise, it is an output parameter
 c  u - the n*n matrix converting the  values at of a polynomial of order
-c         n-1 at n legendre nodes into the coefficients of its 
+c         n-1 at n legendre nodes into the coefficients of its
 c        legendre expansion; please note that
-c        it is an input parameter only if the parameter ifinit (see 
+c        it is an input parameter only if the parameter ifinit (see
 c        below) has been set to 1; otherwise, it is an output parameter
 c  ifinit - an integer parameter telling the subroutine whether it should
-c        initialize the Legendre expander; 
+c        initialize the Legendre expander;
 c     ifinit=1 will cause the subroutine to perform the initialization
 c     ifinit=0 will cause the subroutine to  skip the initialization
 c
@@ -1278,12 +1520,12 @@ c                  Output parameters:
 c
 c  coefs - the interpolation coefficients
 c
-c                 Work arrays: 
+c                 Work arrays:
 c
 c  v - must be at least n*n real *8 locations long
 c
-c       . . . construct the n Gausian nodes on the interval [-1,1]; 
-c             also the corresponding Gaussian expansion-evaluation 
+c       . . . construct the n Gausian nodes on the interval [-1,1];
+c             also the corresponding Gaussian expansion-evaluation
 c             matrices
 c
         itype=2
@@ -1294,8 +1536,8 @@ c       functions will have to be interpolated
 c
         call legepols(x,n+1,v)
 c
-c       apply the interpolation matrix to the ector of values 
-c       of polynomials from the right 
+c       apply the interpolation matrix to the ector of values
+c       of polynomials from the right
 c
         call lematvec(u,v,coefs,n)
         return
@@ -1374,39 +1616,39 @@ c       having only odd-numbered elements
 c
 c                  Input parameters:
 c
-c  x - point on the interval [-1,1] at which the Legendre expansion 
+c  x - point on the interval [-1,1] at which the Legendre expansion
 c       is to be evaluated
 c  nn - order of the expansion to be evaluated
 c  coefs - odd-numbered coefficients of the Legendre expansion
 c       to be evaluated at the point x (nn/2+2 of them things)
-c  ninit - tells the subroutine whether and to what maximum order the 
+c  ninit - tells the subroutine whether and to what maximum order the
 c       arrays coepnm1,coepnp1,coexpnp1 should be initialized.
 c     EXPLANATION: The subroutine will initialize the first ninit/2+2
 c                  (or so) elements of each of the arrays  coepnm1,
-c       coepnp1, coexpnp1. On the first call to this subroutine, ninit 
-c       should be set to the maximum order nn for which this subroutine 
-c       might have to be called; on subsequent calls, ninit should be 
+c       coepnp1, coexpnp1. On the first call to this subroutine, ninit
+c       should be set to the maximum order nn for which this subroutine
+c       might have to be called; on subsequent calls, ninit should be
 c       set to 0. PLEASE NOTE THAT THAT THESE ARRAYS USED BY THIS SUBROUTINE
-c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE 
+c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE
 c       SUBROUTINE LEGEPODD. IF these arrays have been initialized
-c       by one of these two subroutines, they do not need to be 
+c       by one of these two subroutines, they do not need to be
 c       initialized by the other one.
-c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long 
-c       each. Please note that these are input arrays only if ninit 
+c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long
+c       each. Please note that these are input arrays only if ninit
 c       (see above) has been set to 0; otherwise, these are output arrays.
-c 
+c
 c                  Output parameters:
 c
-c  val - the value at the point x of the Legendre expansion with 
-c       coefficients coefs (see above) 
+c  val - the value at the point x of the Legendre expansion with
+c       coefficients coefs (see above)
 c    EXPLANATION: On exit from the subroutine, pols(1) = P_0 (x),
 c       pols(2) = P_2(x), pols(3) =P_4(x),  etc.
-c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long 
-c       each. Please note that these are output parameters only if ninit 
-c       (see above) has not been set to 0; otherwise, these are input 
+c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long
+c       each. Please note that these are output parameters only if ninit
+c       (see above) has not been set to 0; otherwise, these are input
 c       parameters
-c 
-c       
+c
+c
         if(ninit .eq. 0) goto 1400
         done=1
         n=0
@@ -1469,38 +1711,38 @@ c       having only even-numbered elements
 c
 c                  Input parameters:
 c
-c  x - point on the interval [-1,1] at which the Legendre expansion 
+c  x - point on the interval [-1,1] at which the Legendre expansion
 c       is to be evaluated
 c  nn - order of the expansion to be evaluated
 c  coefs - even-numbered coefficients of the Legendre expansion
 c       to be evaluated at the point x (nn/2+2 of them things)
-c  ninit - tells the subroutine whether and to what maximum order the 
+c  ninit - tells the subroutine whether and to what maximum order the
 c       arrays coepnm1,coepnp1,coexpnp1 should be initialized.
 c     EXPLANATION: The subroutine will initialize the first ninit/2+2
 c                  (or so) elements of each of the arrays  coepnm1,
-c       coepnp1, coexpnp1. On the first call to this subroutine, ninit 
-c       should be set to the maximum order nn for which this subroutine 
-c       might have to be called; on subsequent calls, ninit should be 
+c       coepnp1, coexpnp1. On the first call to this subroutine, ninit
+c       should be set to the maximum order nn for which this subroutine
+c       might have to be called; on subsequent calls, ninit should be
 c       set to 0. PLEASE NOTE THAT THAT THESE ARRAYS USED BY THIS SUBROUTINE
-c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE 
+c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE
 c       SUBROUTINE LEGEPEVEN. IF these aqrrays have been initialized
-c       by one of these two subroutines, they do not need to be 
+c       by one of these two subroutines, they do not need to be
 c       initialized by the other one.
-c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long 
-c       each. Please note that these are input arrays only if ninit 
+c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long
+c       each. Please note that these are input arrays only if ninit
 c       (see above) has been set to 0; otherwise, these are output arrays.
-c 
+c
 c                  Output parameters:
 c
-c  val - the value at the point x of the Legendre expansion with 
-c       coefficients coefs (see above) 
+c  val - the value at the point x of the Legendre expansion with
+c       coefficients coefs (see above)
 c    EXPLANATION: On exit from the subroutine, pols(1) = P_0 (x),
 c       pols(2) = P_2(x), pols(3) =P_4(x),  etc.
-c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long 
-c       each. Please note that these are output parameters only if ninit 
-c       (see above) has not been set to 0; otherwise, these are input 
+c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long
+c       each. Please note that these are output parameters only if ninit
+c       (see above) has not been set to 0; otherwise, these are input
 c       parameters
-c       
+c
         if(ninit .eq. 0) goto 1400
 c
         done=1
@@ -1557,48 +1799,48 @@ c
         dimension pols(*),coepnm1(1),coepnp1(1),
      1            coexpnp1(1)
 c
-c       This subroutine evaluates even-numbered Legendre polynomials 
+c       This subroutine evaluates even-numbered Legendre polynomials
 c       of the argument x, up to order nn+1
 c
 c                  Input parameters:
 c
-c  x - the argument for which the Legendre polynomials are 
+c  x - the argument for which the Legendre polynomials are
 c       to be evaluated
 c  nn - the maximum order for which the Legendre polynomials are
 c       to be evaluated
-c  ninit - tells the subroutine whether and to what maximum order the 
+c  ninit - tells the subroutine whether and to what maximum order the
 c       arrays coepnm1,coepnp1,coexpnp1 should be initialized.
 c     EXPLANATION: The subroutine ill initialize the first ninit/2+2
 c                  (or so) elements of each of the arrays  coepnm1,
-c       coepnp1, coexpnp1. On the first call to this subroutine, ninit 
-c       should be set to the maximum order nn for which this subroutine 
-c       might have to be called; on subsequent calls, ninit should be 
+c       coepnp1, coexpnp1. On the first call to this subroutine, ninit
+c       should be set to the maximum order nn for which this subroutine
+c       might have to be called; on subsequent calls, ninit should be
 c       set to 0.
-c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long 
-c       each. Please note that these are input arrays only if ninit 
+c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long
+c       each. Please note that these are input arrays only if ninit
 c       (see above) has been set to 0; otherwise, these are output arrays.
 c       PLEASE NOTE THAT THAT THESE ARRAYS USED BY THIS SUBROUTINE
-c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE 
+c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE
 c       SUBROUTINE LEGEEVEV. IF these aqrrays have been initialized
-c       by one of these two subroutines, they do not need to be 
+c       by one of these two subroutines, they do not need to be
 c       initialized by the other one.
-c 
+c
 c                  Output parameters:
 c
 c  pols - even-numbered Legendre polynomials of the input parameter x
 c         (nn/2+2 of them things)
 c    EXPLANATION: On exit from the subroutine, pols(1) = P_0 (x),
 c       pols(2) = P_2(x), pols(3) =P_4(x),  etc.
-c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long 
-c       each. Please note that these are output parameters only if ninit 
-c       (see above) has not been set to 0; otherwise, these are input 
+c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long
+c       each. Please note that these are output parameters only if ninit
+c       (see above) has not been set to 0; otherwise, these are input
 c       parameters. PLEASE NOTE THAT THAT THESE ARRAYS USED BY THIS SUBROUTINE
-c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE 
+c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE
 c       SUBROUTINE LEGEEVEV. If these arrays have been initialized
-c       by one of these two subroutines, they do not need to be 
+c       by one of these two subroutines, they do not need to be
 c       initialized by the other one.
-c 
-c       
+c
+c
         if(ninit .eq. 0) goto 1400
 c
         done=1
@@ -1649,42 +1891,42 @@ c
         dimension pols(*),coepnm1(1),coepnp1(1),
      1            coexpnp1(1)
 c
-c       This subroutine evaluates odd-numbered Legendre polynomials 
+c       This subroutine evaluates odd-numbered Legendre polynomials
 c       of the argument x, up to order nn+1
 c
 c                  Input parameters:
 c
-c  x - the argument for which the Legendre polynomials are 
+c  x - the argument for which the Legendre polynomials are
 c       to be evaluated
 c  nn - the maximum order for which the Legendre polynomials are
 c       to be evaluated
-c  ninit - tells the subroutine whether and to what maximum order the 
+c  ninit - tells the subroutine whether and to what maximum order the
 c       arrays coepnm1,coepnp1,coexpnp1 should be initialized.
 c     EXPLANATION: The subroutine will initialize the first ninit/2+2
 c                  (or so) elements of each of the arrays  coepnm1,
-c       coepnp1, coexpnp1. On the first call to this subroutine, ninit 
-c       should be set to the maximum order nn for which this subroutine 
-c       might have to be called; on subsequent calls, ninit should be 
+c       coepnp1, coexpnp1. On the first call to this subroutine, ninit
+c       should be set to the maximum order nn for which this subroutine
+c       might have to be called; on subsequent calls, ninit should be
 c       set to 0.
-c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long 
-c       each. Please note that these are input arrays only if ninit 
+c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long
+c       each. Please note that these are input arrays only if ninit
 c       (see above) has been set to 0; otherwise, these are output arrays.
-c 
+c
 c                  Output parameters:
 c
 c  pols - the odd-numbered Legendre polynomials of the input parameter x
 c         (nn/2+2 of them things)
 c    EXPLANATION: On exit from the subroutine, pols(1) = P_1(x),
 c       pols(2) = P_3(x), pols(3) = P_5 (x), etc.
-c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long 
-c       each. Please note that these are output parameters only if ninit 
-c       (see above) has not been set to 0; otherwise, these are input 
-c       parameters. PLEASE NOTE THAT THAT THESE ARRAYS USED BY THIS 
-c       SUBROUTINE ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES 
-c       SUSED BY THE UBROUTINE LEGEODEV. IF these arrays have been 
-c       initialized by one of these two subroutines, they do not need 
+c  coepnm1,coepnp1,coexpnp1 - should be nn/2+4 real *8 elements long
+c       each. Please note that these are output parameters only if ninit
+c       (see above) has not been set to 0; otherwise, these are input
+c       parameters. PLEASE NOTE THAT THAT THESE ARRAYS USED BY THIS
+c       SUBROUTINE ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES
+c       SUSED BY THE UBROUTINE LEGEODEV. IF these arrays have been
+c       initialized by one of these two subroutines, they do not need
 c       to be initialized by the other one.
-c       
+c
         if(ninit .eq. 0) goto 1400
         done=1
         n=0
@@ -1741,7 +1983,7 @@ c                input parameters:
 c
 C  X = evaluation point
 C  coefs = expansion coefficients
-C  N  = order of expansion 
+C  N  = order of expansion
 c
 c   IMPORTANT NOTE: n is {\bf the order of the expansion, which is
 c         one less than the number of terms in the expansion!!}
@@ -1763,7 +2005,7 @@ c
         pkp1=d*x-1
 
         derk=(1/(1+x)+1/(1-x)) /2
-        derkp1=d + derk *x 
+        derkp1=d + derk *x
 c
         val=coefs(1)*pk+coefs(2)*pkp1
         der=coefs(1)*derk+coefs(2)*derkp1
@@ -1806,23 +2048,23 @@ c
         implicit real *8 (a-h,o-z)
         dimension pols(*),ders(*)
 c
-c       This subroutine calculates the values and derivatives of 
-c       a bunch of Legendre Q-functions at the user-specified point 
+c       This subroutine calculates the values and derivatives of
+c       a bunch of Legendre Q-functions at the user-specified point
 c       x on the interval (-1,1)
 c
 c                     Input parameters:
 c
-c  x - the point on the interval [-1,1] where the Q-functions and 
+c  x - the point on the interval [-1,1] where the Q-functions and
 c       their derivatives are to be evaluated
 c  n - the highest order for which the functions are to be evaluated
-c  
+c
 c                     Output parameters:
 c
-c  pols - the values of the Q-functions (the evil twins of the 
+c  pols - the values of the Q-functions (the evil twins of the
 c       Legeendre polynomials) at the point x (n+1 of them things)
-c  ders - the derivatives of the Q-functions (the evil twins of the 
+c  ders - the derivatives of the Q-functions (the evil twins of the
 c       Legeendre polynomials) at the point x (n+1 of them things)
-c  
+c
 c
         d= log( (1+x) /(1-x) ) /2
         pkm1=d
@@ -1832,7 +2074,7 @@ c
         pkp1=d*x-1
 
         derk=(1/(1+x)+1/(1-x)) /2
-        derkp1=d + derk *x 
+        derkp1=d + derk *x
 c
 c        if n=0 or n=1 - exit
 c
@@ -1880,23 +2122,23 @@ c
         subroutine legeq(x,n,pol,der)
         implicit real *8 (a-h,o-z)
 c
-c       This subroutine calculates the value and derivative of 
-c       a Legendre Q-function at the user-specified point 
+c       This subroutine calculates the value and derivative of
+c       a Legendre Q-function at the user-specified point
 c       x on the interval (-1,1)
 c
 c
 c                     Input parameters:
 c
-c  x - the point on the interval [-1,1] where the Q-functions and 
+c  x - the point on the interval [-1,1] where the Q-functions and
 c       their derivatives are to be evaluated
 c  n - the order for which the function is to be evaluated
-c  
+c
 c                     Output parameters:
 c
-c  pol - the value of the n-th Q-function (the evil twin of the 
-c       Legeendre polynomial) at the point x 
-c  ders - the derivatives of the Q-function at the point x 
-c  
+c  pol - the value of the n-th Q-function (the evil twin of the
+c       Legeendre polynomial) at the point x
+c  ders - the derivatives of the Q-function at the point x
+c
 c
         d= log( (1+x) /(1-x) ) /2
         pk=d
@@ -1912,7 +2154,7 @@ c
         if(n .eq. 0) return
 c
         pol=pkp1
-        der=d + der *x 
+        der=d + der *x
         return
  1200 continue
 c
@@ -1930,7 +2172,76 @@ c
         der=n*(x*pkp1-pk)/(x**2-1)
         return
         end
-
+c
+c
+c
+c
+c
+        subroutine clegeq(x,n,pol,der)
+        implicit complex *16 (a-h,o-z)
+        complex *16 ima
+        real *8 pi,done,d3
+        data ima/(0.0d0,1.0d0)/
+c
+c       This subroutine calculates the value and derivative of
+c       a Legendre Q-function at the user-specified point
+c       x on the interval (-1,1)
+c
+c
+c                     Input parameters:
+c
+c  x - the point on the interval [-1,1] where the Q-functions and
+c       their derivatives are to be evaluated
+c  n - the order for which the function is to be evaluated
+c
+c                     Output parameters:
+c
+c  pol - the value of the n-th Q-function (the evil twin of the
+c       Legeendre polynomial) at the point x
+c  ders - the derivatives of the Q-function at the point x
+c
+c
+c
+        done=1
+        pi=atan(done)*4
+c
+        d= log( (1+x) /(1-x) )
+        d=d/2
+c
+        d3=-ima*x
+        if(d3 .gt. 0) d=d-pi/2*ima
+        if(d3 .lt. 0) d=d+pi/2*ima
+c
+        pk=d
+        pkp1=d*x-1
+c
+c        if n=0 or n=1 - exit
+c
+        if(n .ge. 2) goto 1200
+        pol=d
+        der=(1/(1+x)+1/(1-x)) /2
+c
+        if(n .eq. 0) return
+c
+        pol=pkp1
+        der=d + der *x
+        return
+ 1200 continue
+c
+c       n is greater than 1. conduct recursion
+c
+        do 2000 k=1,n-1
+        pkm1=pk
+        pk=pkp1
+        pkp1=( (2*k+1)*x*pk-k*pkm1 )/(k+1)
+ 2000 continue
+c
+c        calculate the derivative
+c
+        pol=pkp1
+        der=n*(x*pkp1-pk)/(x**2-1)
+        return
+        end
 c
 c
 c
@@ -1948,7 +2259,7 @@ c                input parameters:
 c
 C     X = evaluation point
 C     PEXP = expansion coefficients
-C     N  = order of expansion 
+C     N  = order of expansion
 c   IMPORTANT NOTE: n is {\bf the order of the expansion, which is
 c         one less than the number of terms in the expansion!!}
 c
@@ -1964,7 +2275,7 @@ C
         derjm2=0
         derjm1=1
 c
-        val=pexp(1)*pjm2+pexp(2)*pjm1      
+        val=pexp(1)*pjm2+pexp(2)*pjm1
         der=pexp(2)
 c
         DO 600 J = 2,N
@@ -1976,7 +2287,7 @@ c
 c
         derj=derj/j
         der=der+pexp(j+1)*derj
-c 
+c
         pjm2=pjm1
         pjm1=pj
         derjm2=derjm1
@@ -2004,22 +2315,22 @@ c                input parameters:
 c
 C  X - evaluation point
 C  PEXP - expansion coefficients
-C  N  - order of expansion 
-c  pjcoefs1, pjcoefs2 - two arrays precomputed on a previous call 
+C  N  - order of expansion
+c  pjcoefs1, pjcoefs2 - two arrays precomputed on a previous call
 c      on a previous call to this subroutine. Please note that this
-c      is only an input parameter if the parameter ninit (see below) 
+c      is only an input parameter if the parameter ninit (see below)
 c      has been set to 0; otherwise, these are output parameters
-c  ninit - tells the subroutine whether and to what maximum order the 
+c  ninit - tells the subroutine whether and to what maximum order the
 c       arrays coepnm1,coepnp1,coexpnp1 should be initialized.
 c     EXPLANATION: The subroutine will initialize the first ninit
-c       elements of each of the arrays pjcoefs1, pjcoefs2. On the first 
-c       call to this subroutine, ninit should be set to the maximum 
-c       order n for which this subroutine might have to be called; 
-c       on subsequent calls, ninit should be set to 0. PLEASE NOTE 
+c       elements of each of the arrays pjcoefs1, pjcoefs2. On the first
+c       call to this subroutine, ninit should be set to the maximum
+c       order n for which this subroutine might have to be called;
+c       on subsequent calls, ninit should be set to 0. PLEASE NOTE
 c       THAT THAT THESE ARRAYS USED BY THIS SUBROUTINE
-c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE 
+c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE
 c       SUBROUTINE LEGEEXE2. If these arrays have been initialized
-c       by one of these two subroutines, they do not need to be 
+c       by one of these two subroutines, they do not need to be
 c       initialized by the other one.
 c
 c   IMPORTANT NOTE: n is {\bf the order of the expansion, which is
@@ -2039,7 +2350,7 @@ c
         pjcoefs2(j)=-(j-done)/j
 c
  1200 continue
-c 
+c
         ifcalled=1
  1400 continue
 c
@@ -2048,7 +2359,7 @@ c
         derjm2=0
         derjm1=1
 c
-        val=pexp(1)*pjm2+pexp(2)*pjm1      
+        val=pexp(1)*pjm2+pexp(2)*pjm1
         der=pexp(2)
 c
         DO 1600 J = 2,N
@@ -2068,7 +2379,7 @@ ccc         call prin2('derj=*',derj,1)
 
 cccc        derj=derj/j
         der=der+pexp(j+1)*derj
-c 
+c
         pjm2=pjm1
         pjm1=pj
         derjm2=derjm1
@@ -2088,29 +2399,29 @@ c
       REAL *8 pjcoefs1(1),pjcoefs2(1)
       complex *16 PEXP(*),val
 c
-C     This subroutine computes the value of a Legendre expansion 
+C     This subroutine computes the value of a Legendre expansion
 c     with complex coefficients PEXP at point X in interval [-1,1].
 c
 c                input parameters:
 c
 C  X - evaluation point
 C  PEXP - expansion coefficients
-C  N  - order of expansion 
-c  pjcoefs1, pjcoefs2 - two arrays precomputed on a previous call 
+C  N  - order of expansion
+c  pjcoefs1, pjcoefs2 - two arrays precomputed on a previous call
 c      on a previous call to this subroutine. Please note that this
-c      is only an input parameter if the parameter ninit (see below) 
+c      is only an input parameter if the parameter ninit (see below)
 c      has been set to 0; otherwise, these are output parameters
-c  ninit - tells the subroutine whether and to what maximum order the 
+c  ninit - tells the subroutine whether and to what maximum order the
 c       arrays coepnm1,coepnp1,coexpnp1 should be initialized.
 c     EXPLANATION: The subroutine will initialize the first ninit
-c       elements of each of the arrays pjcoefs1, pjcoefs2. On the first 
-c       call to this subroutine, ninit should be set to the maximum 
-c       order n for which this subroutine might have to be called; 
-c       on subsequent calls, ninit should be set to 0. PLEASE NOTE 
+c       elements of each of the arrays pjcoefs1, pjcoefs2. On the first
+c       call to this subroutine, ninit should be set to the maximum
+c       order n for which this subroutine might have to be called;
+c       on subsequent calls, ninit should be set to 0. PLEASE NOTE
 c       THAT THAT THESE ARRAYS USED BY THIS SUBROUTINE
-c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE 
+c       ARE IDENTICAL TO THE ARRAYS WITH THE SAME NAMES USED BY THE
 c       SUBROUTINE LEGEEXE2. If these arrays have been initialized
-c       by one of these two subroutines, they do not need to be 
+c       by one of these two subroutines, they do not need to be
 c       initialized by the other one.
 c
 c   IMPORTANT NOTE: n is {\bf the order of the expansion, which is
@@ -2129,14 +2440,14 @@ c
         pjcoefs2(j)=-(j-done)/j
 c
  1200 continue
-c 
+c
         ifcalled=1
  1400 continue
 c
         pjm2=1
         pjm1=x
 c
-        val=pexp(1)*pjm2+pexp(2)*pjm1      
+        val=pexp(1)*pjm2+pexp(2)*pjm1
 c
         DO 1600 J = 2,N
 c
@@ -2149,5 +2460,203 @@ c
 c
       RETURN
       END
-
-
+c
+c
+c
+c
+c
+        subroutine legerts(itype,n,ts,whts)
+        implicit real *8 (a-h,o-z)
+        dimension ts(1),whts(1)
+c
+c        This subroutine constructs the Gaussian quadrature
+c        or order n. Its claim to fame is the fact that the
+c        cost of the calculation is proportional to n; in
+c        practice, with n=10 000 the calculation is more or
+c        less instantaneous
+c
+c                 Input parameters:
+c
+c  itype - the type of calculation desired:
+c     itype=1 will cause both the roots and the weights to be returned
+c     itype=0 will cause only the roots to be returned
+c  n - the number of nodes to be returned
+c
+c                 Output parameters:
+c
+c  ts - the n Gaussian nodes on the interval [-1,1]
+c  whts - the n Gaussian weights on the interval [-1,1]
+c
+c
+c        . . . determine the number of Taylor coefficients
+c              to be used
+c
+        k=30
+        d=1
+        d2=d+1.0d-24
+        if(d2 .ne. d) k=54
+c
+c       . . . construct the array of initial approximations
+c             to the roots of the n-th legendre polynomial
+c
+        i=n/2
+        ifodd=n-2*i
+c
+        DONE=1
+        pi=datan(done)*4
+        h=pi/(2*n)
+        ii=0
+        do 1100 i=1,n
+c
+        if(i .lt. n/2+1) goto 1100
+        ii=ii+1
+        t=(2*i-1)*h
+        ts(ii)=-dcos(t)
+1100  CONTINUE
+c
+c       starting from the center, find roots one after another
+c
+        pol=1
+        der=0
+c
+        x0=0
+        call legepol(x0,n,pol,der)
+        x1=ts(1)
+c
+        n2=(n+1)/2
+c
+        pol3=pol
+        der3=der
+        do 2000 kk=1,n2
+c
+        if( (ifodd .eq. 1) .and. (kk .eq. 1) ) then
+            ts(kk)=x0
+            whts(kk)=der
+            x0=x1
+            x1=ts(kk+1)
+            pol3=pol
+            der3=der
+            goto 2000
+        endif
+c
+c        conduct newton
+c
+        ifstop=0
+        do 1400 i=1,10
+c
+        h=x1-x0
+        call legetayl(pol3,der3,x0,h,n,k,pol,der)
+c
+        x1=x1-pol/der
+c
+        if(abs(pol) .lt. 1.0d-12) ifstop=ifstop+1
+        if(ifstop .eq. 3) goto 1600
+c
+ 1400 continue
+ 1600 continue
+c
+        ts(kk)=x1
+        if(itype .gt. 0) whts(kk)=der
+c
+        x0=x1
+        x1=ts(kk+1)
+        pol3=pol
+        der3=der
+ 2000 continue
+c
+c        put the obtained roots in the proper order
+c
+        do 2200 i=(n+1)/2,1,-1
+c
+        ts(i+n/2)=ts(i)
+ 2200 continue
+c
+        do 2400 i=1,n/2
+c
+        ts(i)=-ts(n-i+1)
+ 2400 continue
+c
+        if(itype .le. 0) return
+c
+c        put the obtained roots in the proper order
+c
+        do 2600 i=(n+1)/2,1,-1
+c
+        whts(i+n/2)=whts(i)
+ 2600 continue
+c
+        do 2800 i=1,n/2
+c
+        whts(i)=whts(n-i+1)
+ 2800 continue
+c
+        do 3600 i=1,n
+c
+        whts(i)=2/(1-ts(i)**2)/whts(i)**2
+ 3600 continue
+c
+        return
+        end
+c
+c
+c
+c
+c
+        subroutine legetayl(pol,der,x,h,n,k,sum,sumder)
+        implicit real *8 (a-h,o-z)
+c
+c        This subroutine evaluates the Taylor series for the
+c        Legendre polynomial and its derivative at the point
+c        x+h, starting with the value of the polynomial at the
+c        point x, and the value of the derivative of that
+c        polynomial. It uses the obvious three-term recursion
+c        for the derivatives of Legendre polynomials.
+c
+c                 Input parameters:
+c
+c  pol - the value of the polynomial at the pount x
+c  der - the derivative of the polynomial at the pount x
+c  x - the point where the values pol, der are specified
+c  h - the polynomial and its derivative will be evaluated at
+c        the point x+h
+c  n - the order of the Legendre polynomial
+c  k - the order of the Taylor series to be used
+c
+c                 Output parameters:
+c
+c  sum - the value of P_n at the point x+h
+c  sumder - the value of the derivative of P_n at the point x+h
+c
+c        . . . evaluate the derivatives of P_n scaled by h^n/n!,
+c              and sum the taylor series for P_n and its
+c              derivative
+c
+        done=1
+        q0=pol
+        q1=der*h
+        q2=(2*x*der-n*(n+done)*pol)/(1-x**2)
+        q2=q2*h**2/2
+c
+        sum=q0+q1+q2
+        sumder=q1/h+q2*2/h
+c
+        if(k .le. 2) return
+c
+        qi=q1
+        qip1=q2
+c
+        do 1200 i=1,k-2
+c
+        d=2*x*(i+1)**2/h*qip1-(n*(n+done)-i*(i+1))*qi
+        d=d/(i+1)/(i+2)*h**2 /(1-x**2)
+        qip2=d
+c
+        sum=sum+qip2
+        sumder=sumder+d*(i+2)/h
+c
+        qi=qip1
+        qip1=qip2
+ 1200 continue
+c
+        return
+        end
