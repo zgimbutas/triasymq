@@ -5,10 +5,10 @@ cc (see COPYING in home directory).
 cc
 cc SPDX-License-Identifier: BSD-3-Clause-Modification
 cc
-cc    Modified August 13, 2025: Zydrunas Gimbutas
-cc    - remove unnecessary save statements
-cc    - by default, initialize printing units to 0
-cc    - remove fileflush, mach_zero and ztime
+cc Modified August 13, 2025: Zydrunas Gimbutas
+cc - remove unnecessary save statements
+cc - by default, initialize printing units to 0
+cc - remove fileflush, mach_zero and ztime
 cc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c       Printing routines
