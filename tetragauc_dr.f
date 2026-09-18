@@ -17,7 +17,7 @@ c       (1,-1/Sqrt[3],-1/Sqrt[6]),  and (0,0,3/Sqrt[6])
 c
 c       Input:
 c
-c       n - the degree of the quadrature (must not exceed 50)
+c       n - the degree of the quadrature (must not exceed 25)
 c
 c       Output:
 c
@@ -42,7 +42,7 @@ c
 c
 c       SET ALL PARAMETERS
 c
-        PRINT *, 'ENTER mmax (1..50)'
+        PRINT *, 'ENTER mmax (1..25)'
         READ *, mmax
 c
         call prinf('mmax=*',mmax,1)
@@ -72,6 +72,11 @@ c
         call tetragauc(mmax,vert(1,1),vert(1,2),vert(1,3),vert(1,4),
      $     rnodes,weights,numnodes,work)
 c
+        if( numnodes .le. 0 ) then
+        call prinf('tetragauc failed, mmax must be in [1,25], mmax=*',
+     $     mmax,1)
+        stop
+        endif
 c
         call prinf('nummodes=*',numnodes,1)
         call prin2('rnodes=*',rnodes,3*numnodes)       
@@ -193,8 +198,8 @@ c
         implicit real *8 (a-h,o-z)
         dimension z1(3),polsout(1),dersx(1),dersy(1),dersz(1)
 c
-        dimension polsout1(10 000),
-     $       dersx1(10 000),dersy1(10 000),dersz1(10 000)
+        dimension polsout1(140 000),
+     $       dersx1(140 000),dersy1(140 000),dersz1(140 000)
         dimension work(100 000)
 c
         dimension v(4 000 000), v0(4 000 000), rnorms(10000)
