@@ -181,8 +181,8 @@ c
         implicit real *8 (a-h,o-z)
         dimension z1(3),polsout(1),dersx(1),dersy(1),dersz(1)
 c
-        dimension polsout1(10 000),
-     $       dersx1(10 000),dersy1(10 000),dersz1(10 000)
+        dimension polsout1(140 000),
+     $       dersx1(140 000),dersy1(140 000),dersz1(140 000)
         dimension work(100 000)
 c
         dimension v(4 000 000), v0(4 000 000), rnorms(10000)

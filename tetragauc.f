@@ -25,9 +25,14 @@ c       which does all the work.
 c
 c                              input parameters:
 c
-c  n - the number of nodes in each direction. note that the 
-c       total number of nodes to be created is n**3, and the 
-c       algebraic order of the quadrature is 2*n-1
+c  n - the number of nodes in each direction. the algebraic order
+c       of the quadrature is 2*n-1; tetragau0 creates n**3 nodes and
+c       tetragau1 creates n layers of the triasymq rule of degree
+c       2*n-1 (returned in numnodes).
+c       n must not exceed 25: tetragau1 builds the triangle factor
+c       with triasymq of degree 2*n-1, which is limited to 50. for n
+c       outside [1,25] numnodes is returned as 0 and nothing is written
+c       to rnodes and weights.
 c  vert1,vert2,vert3,vert4 - the vertices of the tetrahedron on which the 
 c       quadrature rule is to be constructed
 c
@@ -41,7 +46,8 @@ c                              work arrays:
 c
 c  w - must be at least 2*n+2 real *8 locations for tetragau0
 c
-c  w - must be at least 2*n+2 + 3*n*n+2 real *8 locations for tetragau1
+c  w - must be at least 2*n+2 + 3*max(n*n,6)+2 real *8 locations
+c       for tetragau1
 c
         dimension vert1(3),vert2(3),vert3(3),vert4(3)
         dimension rnodes(3,1),weights(1),w(1)
@@ -70,11 +76,16 @@ c
         iws=its+lts
         lws=n+1
 c        
+c
+c       the triasymq rule of degree 2*n-1 has at most n*n nodes for
+c       n .ge. 3, but 6 nodes for n=2 (degree 3)
+c
+        nn=n*n
+        if( nn .lt. 6 ) nn=6
         irs2=iws+lws
-        lrs2=2*n*n+1
-c        
+        lrs2=2*nn+1
         iws2=irs2+lrs2
-        lws2=n*n+1
+        lws2=nn+1
 c        
         call tetragau1(n,vert1,vert2,vert3,vert4,
      1     rnodes,weights,numnodes,w(its),w(iws),w(irs2),w(iws2))     
@@ -94,7 +105,8 @@ c
         dimension vert1(3),vert2(3),vert3(3),vert4(3)
         dimension rnodes(3,n,n,n),weights(n,n,n),ts(n),ws(n)
         dimension ww(12),xy1(3),xy2(3),xy3(3),xy4(3),xy0(3)
-        dimension endpts(2),b(10000),ts2(10000),ws2(10000)
+        dimension endpts(2),b(10000)
+        dimension ts1(10000),ws1(10000),ts2(10000),ws2(10000)
 c
         ifinit=1
         call legewhts(n,ts,ws,ifinit)
@@ -103,17 +115,32 @@ c
            ws(i)=ws(i)/2
         enddo
 c
+c
+c       the collapse (r,s,t) -> (r*(1-s)*(1-t), s*(1-t), t) has the
+c       jacobian (1-s)*(1-t)**2, so the s direction is integrated with
+c       the n-point gauss-jacobi rule for the weight (1-s) (alpha=1,
+c       beta=0) and the t direction with the rule for (1-t)**2
+c       (alpha=2, beta=0); n points of each are exact for degree 2n-1.
+c       the map t=(x+1)/2 turns the weights into (1-x)/2 and (1-x)**2/4
+c       and dt into dx/2, hence the factors 1/4 and 1/8.
+c
         kind=5
-        alpha=2.0d0
         beta=0.0d0
         kpts=0
+c
+        alpha=1.0d0
+        call gaussq(kind,n,alpha,beta,kpts,endpts,b,ts1,ws1)
+        do i=1,n
+           ts1(i)=(ts1(i)+1)/2
+           ws1(i)=ws1(i)/4
+        enddo
+c
+        alpha=2.0d0
         call gaussq(kind,n,alpha,beta,kpts,endpts,b,ts2,ws2)
         do i=1,n
            ts2(i)=(ts2(i)+1)/2
-           ws2(i)=ws2(i)/2 
+           ws2(i)=ws2(i)/8
         enddo
-        call prin2('ts2=*',ts2,n)
-        call prin2('ws2=*',ws2,n)
 c
         call tetraini(vert2,vert3,vert4,ww)
         call tetrafor(ww,vert1,xy1)
@@ -129,10 +156,10 @@ c
         do 1400 j=1,n
         do 1200 i=1,n
 c
-        rnodes(1,i,j,k)=ts(i)*(1-ts(j))*(1-ts(k))
-        rnodes(2,i,j,k)=ts(j)*(1-ts(k))
-        rnodes(3,i,j,k)=ts(k)
-        weights(i,j,k)=ws(i)*ws(j)*ws(k)*(1-ts(j))*(1-ts(k))**2
+        rnodes(1,i,j,k)=ts(i)*(1-ts1(j))*(1-ts2(k))
+        rnodes(2,i,j,k)=ts1(j)*(1-ts2(k))
+        rnodes(3,i,j,k)=ts2(k)
+        weights(i,j,k)=ws(i)*ws1(j)*ws2(k)
 c
 
         if( n.eq.1 ) then
@@ -179,13 +206,31 @@ c
         dimension rnodes(3,1),weights(1),ts(n),ws(n)
         dimension ww(12),xy1(3),xy2(3),xy3(3),xy4(3),xy0(3)
         dimension v1(2),v2(2),v3(2),rs2(2,1),ws2(1)
+        dimension endpts(2),b(10000)
 c
-        ifinit=1
-        n1=n+1
-        call legewhts(n1,ts,ws,ifinit)
+c       triasymq supports degrees 1..50 only, so n is limited to 25
+c
+        numnodes=0
+        if( n .lt. 1 .or. n .gt. 25 ) return
+c
+c       the collapse (r1,r2,t) -> (r1*(1-t), r2*(1-t), t) has the
+c       jacobian (1-t)**2, so the t direction is integrated with the
+c       n-point gauss-jacobi rule for the weight (1-t)**2 (alpha=2,
+c       beta=0 on [-1,1]); an n-point rule is exact for the degree
+c       2n-1 that triasymq supplies in (r1,r2), one layer fewer than
+c       gauss-legendre with the jacobian left in the integrand.
+c       the map t=(x+1)/2 turns the weight into (1-x)**2/4 and dt into
+c       dx/2, hence the factor 1/8.
+c
+        n1=n
+        kind=5
+        alpha=2.0d0
+        beta=0.0d0
+        kpts=0
+        call gaussq(kind,n1,alpha,beta,kpts,endpts,b,ts,ws)
         do i=1,n1
            ts(i)=(ts(i)+1)/2
-           ws(i)=ws(i)/2
+           ws(i)=ws(i)/8
         enddo
 c
 c
@@ -216,7 +261,7 @@ c
         rnodes(1,kk)=rs2(1,i)*(1-ts(k))
         rnodes(2,kk)=rs2(2,i)*(1-ts(k))
         rnodes(3,kk)=ts(k)
-        weights(kk)=ws2(i)*ws(k)*(1-ts(k))**2
+        weights(kk)=ws2(i)*ws(k)
 c
         enddo
         enddo
